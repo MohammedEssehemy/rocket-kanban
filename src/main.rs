@@ -9,11 +9,6 @@ mod routes;
 
 type StdErr = Box<dyn std::error::Error>;
 
-#[get("/")]
-fn hello_world() -> &'static str {
-   "Hello, world!"
-}
-
 #[rocket::main]
 async fn main() -> Result<(), StdErr> {
     dotenv::dotenv()?;
@@ -22,7 +17,7 @@ async fn main() -> Result<(), StdErr> {
 
     rocket::build()
         .manage(db)
-        .mount("/", rocket::routes![hello_world])
+        .register("/", routes::catchers())
         .mount("/api", routes::api())
         .launch()
         .await?;

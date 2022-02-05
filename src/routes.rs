@@ -3,10 +3,11 @@ use rocket::request::{FromRequest, Outcome, Request};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
 use rocket::State;
+use uuid::Uuid;
 
 use crate::db::Db;
 use crate::models::{
-    Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, UpdateCardDTO,
+    Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, UpdateCardDTO, ErrorResponse
 };
 use crate::StdErr;
 
@@ -62,6 +63,7 @@ impl<'r> FromRequest<'r> for Token {
                 Outcome::Success(token)
             },
             Err(msg) => {
+                eprintln!("{}", msg);
                 Outcome::Failure((
                 http::Status::Unauthorized,
                 "invalid or expired Bearer token",
@@ -131,6 +133,15 @@ fn delete_card(_t: Token, db: &State<Db>, card_id: i64) -> Result<(), Debug<StdE
 }
 
 // single public function which returns all API routes
+#[catch(404)]
+fn not_found(req: &Request) -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        code: "NOT_FOUND".to_string(),
+        message: "rout not found".to_string(), 
+        url: req.uri().to_string(), 
+        x_trace_id: Uuid::new_v4().to_string() 
+    })
+}
 
 pub fn api() -> Vec<rocket::Route> {
     rocket::routes![
@@ -142,5 +153,12 @@ pub fn api() -> Vec<rocket::Route> {
         create_card,
         update_card,
         delete_card,
+    ]
+}
+
+
+pub fn catchers() -> Vec<rocket::Catcher> {
+    rocket::catchers![
+        not_found,
     ]
 }

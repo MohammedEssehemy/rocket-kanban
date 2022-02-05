@@ -1,6 +1,6 @@
 table! {
     use diesel::sql_types::*;
-    use crate::models::Status_enum;
+    // use crate::models::Status_enum;
 
     boards (id) {
         id -> Int8,
@@ -24,7 +24,7 @@ table! {
 
 table! {
     use diesel::sql_types::*;
-    use crate::models::Status_enum;
+    // use crate::models::Status_enum;
 
     tokens (id) {
         id -> Text,
