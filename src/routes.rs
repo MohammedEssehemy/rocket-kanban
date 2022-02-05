@@ -2,12 +2,11 @@ use rocket::http;
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
-use rocket::State;
 use uuid::Uuid;
 
-use crate::db::Db;
+use crate::db::KanbanDb;
 use crate::models::{
-    Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, UpdateCardDTO, ErrorResponse
+    Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, ErrorResponse, Token, UpdateCardDTO,
 };
 use crate::StdErr;
 
@@ -50,25 +49,23 @@ impl<'r> FromRequest<'r> for Token {
 
         // we can use request.guard::<T>() to get a T from a request
         // which includes managed application state like our Db
-        let outcome_db = req.guard::<&'r State<Db>>().await;
+        let outcome_db = req.guard::<KanbanDb>().await;
         let db = match outcome_db {
             Outcome::Success(db) => db,
             _ => return Outcome::Failure((http::Status::InternalServerError, "internal error")),
         };
 
         // validate token
-        let token_result = db.validate_token(token_id);
+        let token_result = db.validate_token(token_id.to_string()).await;
         match token_result {
-            Ok(token) => {
-                Outcome::Success(token)
-            },
+            Ok(token) => Outcome::Success(token),
             Err(msg) => {
                 eprintln!("{}", msg);
                 Outcome::Failure((
-                http::Status::Unauthorized,
-                "invalid or expired Bearer token",
-            ))
-        },
+                    http::Status::Unauthorized,
+                    "invalid or expired Bearer token",
+                ))
+            }
         }
     }
 }
@@ -76,69 +73,77 @@ impl<'r> FromRequest<'r> for Token {
 // board routes
 
 #[rocket::get("/boards")]
-fn boards(_t: Token, db: &State<Db>) -> Result<Json<Vec<Board>>, Debug<StdErr>> {
-    db.boards().map(Json).map_err(Debug)
+async fn boards(_t: Token, db: KanbanDb) -> Result<Json<Vec<Board>>, Debug<StdErr>> {
+    db.boards().await.map(Json).map_err(Debug)
 }
 
 #[rocket::post("/boards", data = "<create_board>")]
-fn create_board(
+async fn create_board(
     _t: Token,
-    db: &State<Db>,
+    db: KanbanDb,
     create_board: Json<CreateBoardDTO>,
 ) -> Result<Json<Board>, Debug<StdErr>> {
-    db.create_board(create_board.0).map(Json).map_err(Debug)
+    db.create_board(create_board.0)
+        .await
+        .map(Json)
+        .map_err(Debug)
 }
 
 #[rocket::get("/boards/<board_id>/summary")]
-fn board_summary(_t: Token, db: &State<Db>, board_id: i64) -> Result<Json<BoardSummary>, Debug<StdErr>> {
-    db.board_summary(board_id).map(Json).map_err(Debug)
+async fn board_summary(
+    _t: Token,
+    db: KanbanDb,
+    board_id: i64,
+) -> Result<Json<BoardSummary>, Debug<StdErr>> {
+    db.board_summary(board_id).await.map(Json).map_err(Debug)
 }
 
 #[rocket::delete("/boards/<board_id>")]
-fn delete_board(_t: Token, db: &State<Db>, board_id: i64) -> Result<(), Debug<StdErr>> {
-    db.delete_board(board_id).map_err(Debug)
+async fn delete_board(_t: Token, db: KanbanDb, board_id: i64) -> Result<(), Debug<StdErr>> {
+    db.delete_board(board_id).await.map_err(Debug)
 }
 
 // card routes
 
 #[rocket::get("/boards/<board_id>/cards")]
-fn cards(_t: Token, db: &State<Db>, board_id: i64) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
-    db.cards(board_id).map(Json).map_err(Debug)
+async fn cards(_t: Token, db: KanbanDb, board_id: i64) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
+    db.cards(board_id).await.map(Json).map_err(Debug)
 }
 
 #[rocket::post("/cards", data = "<create_card>")]
-fn create_card(
+async fn create_card(
     _t: Token,
-    db: &State<Db>,
+    db: KanbanDb,
     create_card: Json<CreateCardDTO>,
 ) -> Result<Json<Card>, Debug<StdErr>> {
-    db.create_card(create_card.0).map(Json).map_err(Debug)
+    db.create_card(create_card.0).await.map(Json).map_err(Debug)
 }
 
 #[rocket::patch("/cards/<card_id>", data = "<update_card>")]
-fn update_card(
+async fn update_card(
     _t: Token,
-    db: &State<Db>,
+    db: KanbanDb,
     card_id: i64,
     update_card: Json<UpdateCardDTO>,
 ) -> Result<Json<Card>, Debug<StdErr>> {
     db.update_card(card_id, update_card.0)
+        .await
         .map(Json)
         .map_err(Debug)
 }
 
 #[rocket::delete("/cards/<card_id>")]
-fn delete_card(_t: Token, db: &State<Db>, card_id: i64) -> Result<(), Debug<StdErr>> {
-    db.delete_card(card_id).map_err(Debug)
+async fn delete_card(_t: Token, db: KanbanDb, card_id: i64) -> Result<(), Debug<StdErr>> {
+    db.delete_card(card_id).await.map_err(Debug)
 }
 
 #[catch(404)]
 fn not_found(req: &Request) -> Json<ErrorResponse> {
     Json(ErrorResponse {
         code: "NOT_FOUND".to_string(),
-        message: "route not found".to_string(), 
-        url: req.uri().to_string(), 
-        x_trace_id: Uuid::new_v4()
+        message: "route not found".to_string(),
+        url: req.uri().to_string(),
+        x_trace_id: Uuid::new_v4(),
     })
 }
 
@@ -155,9 +160,6 @@ pub fn api() -> Vec<rocket::Route> {
     ]
 }
 
-
 pub fn catchers() -> Vec<rocket::Catcher> {
-    rocket::catchers![
-        not_found,
-    ]
+    rocket::catchers![not_found,]
 }

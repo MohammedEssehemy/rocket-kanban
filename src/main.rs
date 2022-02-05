@@ -13,10 +13,9 @@ type StdErr = Box<dyn std::error::Error>;
 async fn main() -> Result<(), StdErr> {
     dotenv::dotenv()?;
     logger::init()?;
-    let db = db::Db::connect()?;
 
     rocket::build()
-        .manage(db)
+        .attach(db::KanbanDb::fairing())
         .register("/", routes::catchers())
         .mount("/api", routes::api())
         .launch()

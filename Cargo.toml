@@ -16,3 +16,4 @@ diesel = { version = "1.4", features = ["postgres", "chrono", "r2d2"] }
 diesel-derive-enum = { version = "1.1", features = ["postgres"] }
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
 uuid = { version = "0.8", features = ["serde", "v4"] }
+rocket_sync_db_pools = { version = "0.1.0-rc.1", default-features = false, "features" = [ "diesel_postgres_pool" ] }
