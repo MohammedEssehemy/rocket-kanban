@@ -1,5 +1,5 @@
 use crate::schema::*;
-
+use uuid::Uuid;
 
 // for authentication
 
@@ -27,7 +27,6 @@ pub struct Card {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-
 #[derive(Debug, serde::Serialize, serde::Deserialize, diesel_derive_enum::DbEnum)]
 #[serde(rename_all = "camelCase")]
 #[DieselType = "Status_enum"]
@@ -52,7 +51,6 @@ pub struct StatusCount {
     #[sql_type = "Status_enum"]
     pub status: Status,
 }
-
 
 // converting from a list of StatusCounts to a BoardSummary
 impl From<Vec<StatusCount>> for BoardSummary {
@@ -92,12 +90,11 @@ pub struct UpdateCardDTO {
     pub status: Status,
 }
 
-
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ErrorResponse {
     pub code: String,
     pub message: String,
     pub url: String,
-    pub x_trace_id: String
+    pub x_trace_id: Uuid,
 }

@@ -132,14 +132,13 @@ fn delete_card(_t: Token, db: &State<Db>, card_id: i64) -> Result<(), Debug<StdE
     db.delete_card(card_id).map_err(Debug)
 }
 
-// single public function which returns all API routes
 #[catch(404)]
 fn not_found(req: &Request) -> Json<ErrorResponse> {
     Json(ErrorResponse {
         code: "NOT_FOUND".to_string(),
-        message: "rout not found".to_string(), 
+        message: "route not found".to_string(), 
         url: req.uri().to_string(), 
-        x_trace_id: Uuid::new_v4().to_string() 
+        x_trace_id: Uuid::new_v4()
     })
 }
 
