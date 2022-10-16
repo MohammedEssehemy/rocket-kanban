@@ -1,3 +1,4 @@
+use diesel::prelude::*;
 use crate::schema::*;
 use uuid::Uuid;
 
@@ -29,7 +30,7 @@ pub struct Card {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, diesel_derive_enum::DbEnum)]
 #[serde(rename_all = "camelCase")]
-#[DieselType = "Status_enum"]
+#[DieselTypePath = "crate::schema::sql_types::StatusEnum"]
 pub enum Status {
     Todo,
     Doing,
@@ -48,7 +49,7 @@ pub struct BoardSummary {
 pub struct StatusCount {
     #[sql_type = "diesel::sql_types::BigInt"]
     pub count: i64,
-    #[sql_type = "Status_enum"]
+    #[sql_type = "crate::schema::sql_types::StatusEnum"]
     pub status: Status,
 }
 

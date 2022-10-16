@@ -1,5 +1,4 @@
-#[macro_use] extern crate diesel;
-#[macro_use] extern crate rocket;
+use rocket;
 
 mod logger;
 mod models;
@@ -9,18 +8,15 @@ mod routes;
 
 type StdErr = Box<dyn std::error::Error>;
 
-#[rocket::main]
-async fn main() -> Result<(), StdErr> {
-    dotenv::dotenv()?;
-    logger::init()?;
+#[rocket::launch]
+fn rocket_main() -> _ {
+    dotenv::dotenv().unwrap();
+    logger::init().unwrap();
+    
+    let pool = db::KanbanDb::connect().unwrap();
 
     rocket::build()
-        .attach(db::KanbanDb::fairing())
+        .manage(pool)
         .register("/", routes::catchers())
         .mount("/api", routes::api())
-        .launch()
-        .await?;
-
-    Ok(())
-
 }

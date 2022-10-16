@@ -1,4 +1,4 @@
-use rocket::http;
+use rocket::{http, State};
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
@@ -49,14 +49,14 @@ impl<'r> FromRequest<'r> for Token {
 
         // we can use request.guard::<T>() to get a T from a request
         // which includes managed application state like our Db
-        let outcome_db = req.guard::<KanbanDb>().await;
+        let outcome_db = req.guard::<&State<KanbanDb>>().await;
         let db = match outcome_db {
             Outcome::Success(db) => db,
             _ => return Outcome::Failure((http::Status::InternalServerError, "internal error")),
         };
 
         // validate token
-        let token_result = db.validate_token(token_id.to_string()).await;
+        let token_result = db.validate_token(token_id.to_string());
         match token_result {
             Ok(token) => Outcome::Success(token),
             Err(msg) => {
@@ -73,18 +73,17 @@ impl<'r> FromRequest<'r> for Token {
 // board routes
 
 #[rocket::get("/boards")]
-async fn boards(_t: Token, db: KanbanDb) -> Result<Json<Vec<Board>>, Debug<StdErr>> {
-    db.boards().await.map(Json).map_err(Debug)
+async fn boards(_t: Token, db: &State<KanbanDb>) -> Result<Json<Vec<Board>>, Debug<StdErr>> {
+    db.boards().map(Json).map_err(Debug)
 }
 
 #[rocket::post("/boards", data = "<create_board>")]
 async fn create_board(
     _t: Token,
-    db: KanbanDb,
+    db: &State<KanbanDb>,
     create_board: Json<CreateBoardDTO>,
 ) -> Result<Json<Board>, Debug<StdErr>> {
     db.create_board(create_board.0)
-        .await
         .map(Json)
         .map_err(Debug)
 }
@@ -92,52 +91,51 @@ async fn create_board(
 #[rocket::get("/boards/<board_id>/summary")]
 async fn board_summary(
     _t: Token,
-    db: KanbanDb,
+    db: &State<KanbanDb>,
     board_id: i64,
 ) -> Result<Json<BoardSummary>, Debug<StdErr>> {
-    db.board_summary(board_id).await.map(Json).map_err(Debug)
+    db.board_summary(board_id).map(Json).map_err(Debug)
 }
 
 #[rocket::delete("/boards/<board_id>")]
-async fn delete_board(_t: Token, db: KanbanDb, board_id: i64) -> Result<(), Debug<StdErr>> {
-    db.delete_board(board_id).await.map_err(Debug)
+async fn delete_board(_t: Token, db: &State<KanbanDb>, board_id: i64) -> Result<(), Debug<StdErr>> {
+    db.delete_board(board_id).map_err(Debug)
 }
 
 // card routes
 
 #[rocket::get("/boards/<board_id>/cards")]
-async fn cards(_t: Token, db: KanbanDb, board_id: i64) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
-    db.cards(board_id).await.map(Json).map_err(Debug)
+async fn cards(_t: Token, db: &State<KanbanDb>, board_id: i64) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
+    db.cards(board_id).map(Json).map_err(Debug)
 }
 
 #[rocket::post("/cards", data = "<create_card>")]
 async fn create_card(
     _t: Token,
-    db: KanbanDb,
+    db: &State<KanbanDb>,
     create_card: Json<CreateCardDTO>,
 ) -> Result<Json<Card>, Debug<StdErr>> {
-    db.create_card(create_card.0).await.map(Json).map_err(Debug)
+    db.create_card(create_card.0).map(Json).map_err(Debug)
 }
 
 #[rocket::patch("/cards/<card_id>", data = "<update_card>")]
 async fn update_card(
     _t: Token,
-    db: KanbanDb,
+    db: &State<KanbanDb>,
     card_id: i64,
     update_card: Json<UpdateCardDTO>,
 ) -> Result<Json<Card>, Debug<StdErr>> {
     db.update_card(card_id, update_card.0)
-        .await
         .map(Json)
         .map_err(Debug)
 }
 
 #[rocket::delete("/cards/<card_id>")]
-async fn delete_card(_t: Token, db: KanbanDb, card_id: i64) -> Result<(), Debug<StdErr>> {
-    db.delete_card(card_id).await.map_err(Debug)
+async fn delete_card(_t: Token, db: &State<KanbanDb>, card_id: i64) -> Result<(), Debug<StdErr>> {
+    db.delete_card(card_id).map_err(Debug)
 }
 
-#[catch(404)]
+#[rocket::catch(404)]
 fn not_found(req: &Request) -> Json<ErrorResponse> {
     Json(ErrorResponse {
         code: "NOT_FOUND".to_string(),
