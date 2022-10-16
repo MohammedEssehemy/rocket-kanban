@@ -1,4 +1,3 @@
-use diesel::prelude::*;
 use crate::schema::*;
 use uuid::Uuid;
 
@@ -47,9 +46,9 @@ pub struct BoardSummary {
 // this will be the result of our diesel::sql_query query
 #[derive(diesel::QueryableByName)]
 pub struct StatusCount {
-    #[sql_type = "diesel::sql_types::BigInt"]
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
     pub count: i64,
-    #[sql_type = "crate::schema::sql_types::StatusEnum"]
+    #[diesel(sql_type = crate::schema::sql_types::StatusEnum)]
     pub status: Status,
 }
 
@@ -70,14 +69,14 @@ impl From<Vec<StatusCount>> for BoardSummary {
 
 #[derive(serde::Deserialize, diesel::Insertable)]
 #[serde(rename_all = "camelCase")]
-#[table_name = "boards"]
+#[diesel(table_name = boards)]
 pub struct CreateBoardDTO {
     pub name: String,
 }
 
 #[derive(serde::Deserialize, diesel::Insertable)]
 #[serde(rename_all = "camelCase")]
-#[table_name = "cards"]
+#[diesel(table_name = cards)]
 pub struct CreateCardDTO {
     pub board_id: i64,
     pub description: String,
@@ -85,7 +84,7 @@ pub struct CreateCardDTO {
 
 #[derive(serde::Deserialize, diesel::AsChangeset)]
 #[serde(rename_all = "camelCase")]
-#[table_name = "cards"]
+#[diesel(table_name = cards)]
 pub struct UpdateCardDTO {
     pub description: String,
     pub status: Status,

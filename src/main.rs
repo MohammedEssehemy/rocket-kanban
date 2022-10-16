@@ -11,7 +11,7 @@ type StdErr = Box<dyn std::error::Error>;
 #[rocket::launch]
 fn rocket_main() -> _ {
     dotenv::dotenv().unwrap();
-    logger::init().unwrap();
+    logger::init();
     
     let pool = db::KanbanDb::connect().unwrap();
 

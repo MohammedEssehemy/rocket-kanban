@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use diesel::{
-    r2d2::{ConnectionManager, Pool, PooledConnection},
+    r2d2::{ConnectionManager, Pool},
     PgConnection,
 };
 use std::env;

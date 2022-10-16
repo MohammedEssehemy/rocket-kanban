@@ -1,13 +1,10 @@
-// src/logger.rs
-
 use std::env;
-use std::fs;
 use log::{debug, error, info, trace, warn};
 
-pub fn init() -> Result<(), fern::InitError> {
+pub fn init() -> () {
     // pull log level from env
-    let log_level = env::var("LOG_LEVEL").unwrap_or("INFO".into());
-    let log_level = log_level
+    let log_level = env::var("LOG_LEVEL")
+        .unwrap_or("INFO".into())
         .parse::<log::LevelFilter>()
         .unwrap_or(log::LevelFilter::Info);
 
@@ -27,18 +24,27 @@ pub fn init() -> Result<(), fern::InitError> {
 
     // also log to file if one is provided via env
     if let Ok(log_file) = env::var("LOG_FILE") {
-        let log_file = fs::File::create(log_file)?;
-        builder = builder.chain(log_file);
+        let file_config = fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "[{}][{}][{}] {}",
+                chrono::Local::now(),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Error)
+        .chain(fern::log_file(log_file).unwrap());
+        builder = builder.chain(file_config);
     }
 
     // globally apply logger
-    builder.apply()?;
+    builder.apply().unwrap();
 
     trace!("TRACE output enabled");
     debug!("DEBUG output enabled");
     info!("INFO output enabled");
     warn!("WARN output enabled");
     error!("ERROR output enabled");
-
-    Ok(())
 }
