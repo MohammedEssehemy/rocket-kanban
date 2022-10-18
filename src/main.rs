@@ -1,22 +1,19 @@
-use rocket;
-
 mod logger;
-mod models;
-mod schema;
 mod db;
 mod routes;
 
-type StdErr = Box<dyn std::error::Error>;
+use rocket;
+use db::DB;
 
 #[rocket::launch]
 fn rocket_main() -> _ {
     dotenv::dotenv().unwrap();
     logger::init();
     
-    let pool = db::KanbanDb::connect().unwrap();
+    let db_connection = DB::connect().unwrap();
 
     rocket::build()
-        .manage(pool)
+        .manage(db_connection)
         .register("/", routes::catchers())
         .mount("/api", routes::api())
 }

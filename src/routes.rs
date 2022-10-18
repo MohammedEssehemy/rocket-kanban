@@ -1,14 +1,24 @@
-use rocket::{http, State};
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::response::Debug;
 use rocket::serde::json::Json;
+use rocket::{http, State};
 use uuid::Uuid;
 
-use crate::db::KanbanDb;
-use crate::models::{
-    Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, ErrorResponse, Token, UpdateCardDTO,
+use crate::db::{
+    models::{
+        Board, 
+        BoardSummary, 
+        Card, 
+        CreateBoardDTO, 
+        CreateCardDTO, 
+        ErrorResponse, 
+        Token,
+        UpdateCardDTO,
+    },
+    DB,
 };
-use crate::StdErr;
+
+type StdErr = Box<dyn std::error::Error>;
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for Token {
@@ -49,7 +59,7 @@ impl<'r> FromRequest<'r> for Token {
 
         // we can use request.guard::<T>() to get a T from a request
         // which includes managed application state like our Db
-        let outcome_db = req.guard::<&State<KanbanDb>>().await;
+        let outcome_db = req.guard::<&State<DB>>().await;
         let db = match outcome_db {
             Outcome::Success(db) => db,
             _ => return Outcome::Failure((http::Status::InternalServerError, "internal error")),
@@ -73,46 +83,44 @@ impl<'r> FromRequest<'r> for Token {
 // board routes
 
 #[rocket::get("/boards")]
-async fn boards(_t: Token, db: &State<KanbanDb>) -> Result<Json<Vec<Board>>, Debug<StdErr>> {
+async fn boards(_t: Token, db: &State<DB>) -> Result<Json<Vec<Board>>, Debug<StdErr>> {
     db.boards().map(Json).map_err(Debug)
 }
 
 #[rocket::post("/boards", data = "<create_board>")]
 async fn create_board(
     _t: Token,
-    db: &State<KanbanDb>,
+    db: &State<DB>,
     create_board: Json<CreateBoardDTO>,
 ) -> Result<Json<Board>, Debug<StdErr>> {
-    db.create_board(create_board.0)
-        .map(Json)
-        .map_err(Debug)
+    db.create_board(create_board.0).map(Json).map_err(Debug)
 }
 
 #[rocket::get("/boards/<board_id>/summary")]
 async fn board_summary(
     _t: Token,
-    db: &State<KanbanDb>,
+    db: &State<DB>,
     board_id: i64,
 ) -> Result<Json<BoardSummary>, Debug<StdErr>> {
     db.board_summary(board_id).map(Json).map_err(Debug)
 }
 
 #[rocket::delete("/boards/<board_id>")]
-async fn delete_board(_t: Token, db: &State<KanbanDb>, board_id: i64) -> Result<(), Debug<StdErr>> {
+async fn delete_board(_t: Token, db: &State<DB>, board_id: i64) -> Result<(), Debug<StdErr>> {
     db.delete_board(board_id).map_err(Debug)
 }
 
 // card routes
 
 #[rocket::get("/boards/<board_id>/cards")]
-async fn cards(_t: Token, db: &State<KanbanDb>, board_id: i64) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
+async fn cards(_t: Token, db: &State<DB>, board_id: i64) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
     db.cards(board_id).map(Json).map_err(Debug)
 }
 
 #[rocket::post("/cards", data = "<create_card>")]
 async fn create_card(
     _t: Token,
-    db: &State<KanbanDb>,
+    db: &State<DB>,
     create_card: Json<CreateCardDTO>,
 ) -> Result<Json<Card>, Debug<StdErr>> {
     db.create_card(create_card.0).map(Json).map_err(Debug)
@@ -121,7 +129,7 @@ async fn create_card(
 #[rocket::patch("/cards/<card_id>", data = "<update_card>")]
 async fn update_card(
     _t: Token,
-    db: &State<KanbanDb>,
+    db: &State<DB>,
     card_id: i64,
     update_card: Json<UpdateCardDTO>,
 ) -> Result<Json<Card>, Debug<StdErr>> {
@@ -131,7 +139,7 @@ async fn update_card(
 }
 
 #[rocket::delete("/cards/<card_id>")]
-async fn delete_card(_t: Token, db: &State<KanbanDb>, card_id: i64) -> Result<(), Debug<StdErr>> {
+async fn delete_card(_t: Token, db: &State<DB>, card_id: i64) -> Result<(), Debug<StdErr>> {
     db.delete_card(card_id).map_err(Debug)
 }
 
