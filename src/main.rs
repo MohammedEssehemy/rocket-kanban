@@ -1,18 +1,18 @@
-mod logger;
+use dotenv::dotenv;
+use rocket::{build, launch, Build, Rocket};
 mod db;
+mod logger;
 mod routes;
-
-use rocket;
 use db::DB;
 
-#[rocket::launch]
-fn rocket_main() -> _ {
-    dotenv::dotenv().unwrap();
+#[launch]
+fn rocket_main() -> Rocket<Build> {
+    dotenv().unwrap();
     logger::init();
-    
+
     let db_connection = DB::connect().unwrap();
 
-    rocket::build()
+    build()
         .manage(db_connection)
         .register("/", routes::catchers())
         .mount("/api", routes::api())

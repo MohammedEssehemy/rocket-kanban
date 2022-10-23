@@ -1,14 +1,14 @@
 pub mod models;
-
 mod schema;
-use std::env;
+
 use diesel::prelude::*;
 use diesel::{
-    PgConnection,
     r2d2::{ConnectionManager, Pool, PooledConnection},
+    PgConnection,
 };
-use models::*;
-use schema::*;
+use models::{Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, UpdateCardDTO};
+use schema::{boards, cards, tokens};
+use std::env;
 
 type StdErr = Box<dyn std::error::Error>;
 
@@ -35,7 +35,7 @@ impl DB {
         f(conn)
     }
     // token methods
-    pub fn validate_token(&self, token_id: String) -> Result<Token, StdErr> {
+    pub fn validate_token(&self, token_id: &str) -> Result<Token, StdErr> {
         let token = self.run(|conn| {
             tokens::table
                 .filter(tokens::id.eq(token_id))

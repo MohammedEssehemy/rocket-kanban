@@ -1,5 +1,4 @@
-use super::schema::{boards, cards, sql_types::{StatusEnum}};
-use uuid::Uuid;
+use super::schema::{boards, cards, sql_types::StatusEnum};
 
 // for authentication
 
@@ -88,13 +87,4 @@ pub struct CreateCardDTO {
 pub struct UpdateCardDTO {
     pub description: String,
     pub status: Status,
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ErrorResponse {
-    pub code: String,
-    pub message: String,
-    pub url: String,
-    pub x_trace_id: Uuid,
 }
