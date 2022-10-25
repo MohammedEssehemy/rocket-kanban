@@ -4,6 +4,7 @@ mod db;
 mod logger;
 mod routes;
 use db::DB;
+use routes::{api, catchers, Auth};
 
 #[launch]
 fn rocket_main() -> Rocket<Build> {
@@ -14,6 +15,7 @@ fn rocket_main() -> Rocket<Build> {
 
     build()
         .manage(db_connection)
-        .register("/", routes::catchers())
-        .mount("/api", routes::api())
+        .attach(Auth)
+        .register("/", catchers())
+        .mount("/api", api())
 }

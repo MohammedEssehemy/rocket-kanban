@@ -7,13 +7,17 @@ use rocket::{delete, get, patch, post, response::Debug, routes, serde::json::Jso
 
 // card routes
 #[get("/boards/<board_id>/cards")]
-async fn cards(_t: Token, db: &State<DB>, board_id: i64) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
+async fn cards(
+    _t: &Token,
+    db: &State<DB>,
+    board_id: i64,
+) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
     db.cards(board_id).map(Json).map_err(Debug)
 }
 
 #[post("/cards", data = "<create_card>")]
 async fn create_card(
-    _t: Token,
+    _t: &Token,
     db: &State<DB>,
     create_card: Json<CreateCardDTO>,
 ) -> Result<Json<Card>, Debug<StdErr>> {
@@ -22,7 +26,7 @@ async fn create_card(
 
 #[patch("/cards/<card_id>", data = "<update_card>")]
 async fn update_card(
-    _t: Token,
+    _t: &Token,
     db: &State<DB>,
     card_id: i64,
     update_card: Json<UpdateCardDTO>,
@@ -33,7 +37,7 @@ async fn update_card(
 }
 
 #[delete("/cards/<card_id>")]
-async fn delete_card(_t: Token, db: &State<DB>, card_id: i64) -> Result<(), Debug<StdErr>> {
+async fn delete_card(_t: &Token, db: &State<DB>, card_id: i64) -> Result<(), Debug<StdErr>> {
     db.delete_card(card_id).map_err(Debug)
 }
 

@@ -2,7 +2,7 @@ use super::schema::{boards, cards, sql_types::StatusEnum};
 
 // for authentication
 
-#[derive(diesel::Queryable)]
+#[derive(diesel::Queryable, Clone)]
 pub struct Token {
     pub id: String,
     pub expired_at: chrono::DateTime<chrono::Utc>,

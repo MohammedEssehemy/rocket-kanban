@@ -1,10 +1,11 @@
 use rocket::Route;
+mod auth;
 mod boards;
 mod cards;
 mod catcher;
 mod http_error;
-mod token;
 
+pub use auth::Auth;
 pub use catcher::catchers;
 
 pub fn api() -> Vec<Route> {
