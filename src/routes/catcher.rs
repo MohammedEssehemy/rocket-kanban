@@ -1,4 +1,4 @@
-use rocket::{serde::json::Json, Request};
+use rocket::{http::Status, serde::json::Json, Request};
 
 use super::http_error::HttpError;
 
@@ -9,8 +9,10 @@ fn not_found(req: &Request) -> Json<HttpError> {
 }
 
 #[rocket::catch(default)]
-fn default_catcher<'r>(req: &'r Request) -> Json<&'r HttpError> {
-    let error = req.local_cache(|| HttpError::server_error(&req.uri().to_string()));
+fn default_catcher<'r>(status: Status, req: &'r Request) -> Json<&'r HttpError> {
+    let error = req.local_cache(|| {
+        HttpError::from_message(&status, "something went wrong", &req.uri().to_string())
+    });
     Json(error)
 }
 

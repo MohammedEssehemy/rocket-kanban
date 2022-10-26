@@ -11,7 +11,7 @@ async fn boards(_t: &Token, db: &State<DB>) -> Result<Json<Vec<Board>>, Debug<St
     db.boards().map(Json).map_err(Debug)
 }
 
-#[post("/boards", data = "<create_board>")]
+#[post("/boards", format = "json", data = "<create_board>")]
 async fn create_board(
     _t: &Token,
     db: &State<DB>,
