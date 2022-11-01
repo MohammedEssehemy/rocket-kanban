@@ -10,7 +10,8 @@ use models::{Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, Up
 use schema::{boards, cards, tokens};
 use std::env;
 
-type StdErr = Box<dyn std::error::Error>;
+type DbErr = Box<dyn std::error::Error>;
+type DbResult<T> = Result<T, DbErr>;
 
 type PgPool = Pool<ConnectionManager<PgConnection>>;
 type SinglePgConnection = PooledConnection<ConnectionManager<PgConnection>>;
@@ -20,7 +21,7 @@ pub struct DB {
 }
 
 impl DB {
-    pub fn connect() -> Result<Self, StdErr> {
+    pub fn connect() -> DbResult<Self> {
         let db_url = env::var("DATABASE_URL")?;
         let manager = ConnectionManager::new(db_url);
         let pool = Pool::new(manager)?;
@@ -35,7 +36,7 @@ impl DB {
         f(conn)
     }
     // token methods
-    pub fn validate_token(&self, token_id: &str) -> Result<Token, StdErr> {
+    pub fn validate_token(&self, token_id: &str) -> DbResult<Token> {
         let token = self.run(|conn| {
             tokens::table
                 .filter(tokens::id.eq(token_id))
@@ -45,12 +46,12 @@ impl DB {
         return Ok(token);
     }
 
-    pub fn boards(&self) -> Result<Vec<Board>, StdErr> {
+    pub fn boards(&self) -> DbResult<Vec<Board>> {
         let all_boards = self.run(|conn| boards::table.load(conn))?;
         Ok(all_boards)
     }
 
-    pub fn board_summary(&self, board_id: i64) -> Result<BoardSummary, StdErr> {
+    pub fn board_summary(&self, board_id: i64) -> DbResult<BoardSummary> {
         let counts = self.run(|conn| {
             diesel::sql_query(format!(
                 "select count(*), status from cards where cards.board_id = {} group by status",
@@ -61,7 +62,7 @@ impl DB {
         Ok(counts.into())
     }
 
-    pub fn create_board(&self, create_board: CreateBoardDTO) -> Result<Board, StdErr> {
+    pub fn create_board(&self, create_board: CreateBoardDTO) -> DbResult<Board> {
         let board = self.run(|conn| {
             diesel::insert_into(boards::table)
                 .values(&create_board)
@@ -70,20 +71,20 @@ impl DB {
         Ok(board)
     }
 
-    pub fn delete_board(&self, board_id: i64) -> Result<(), StdErr> {
+    pub fn delete_board(&self, board_id: i64) -> DbResult<()> {
         self.run(|conn| {
             diesel::delete(boards::table.filter(boards::id.eq(board_id))).execute(conn)
         })?;
         Ok(())
     }
 
-    pub fn cards(&self, board_id: i64) -> Result<Vec<Card>, StdErr> {
+    pub fn cards(&self, board_id: i64) -> DbResult<Vec<Card>> {
         let cards =
             self.run(|conn| cards::table.filter(cards::board_id.eq(board_id)).load(conn))?;
         Ok(cards)
     }
 
-    pub fn create_card(&self, create_card: CreateCardDTO) -> Result<Card, StdErr> {
+    pub fn create_card(&self, create_card: CreateCardDTO) -> DbResult<Card> {
         let card = self.run(|conn| {
             diesel::insert_into(cards::table)
                 .values(create_card)
@@ -92,7 +93,7 @@ impl DB {
         Ok(card)
     }
 
-    pub fn update_card(&self, card_id: i64, update_card: UpdateCardDTO) -> Result<Card, StdErr> {
+    pub fn update_card(&self, card_id: i64, update_card: UpdateCardDTO) -> DbResult<Card> {
         let card = self.run(|conn| {
             diesel::update(cards::table.filter(cards::id.eq(card_id)))
                 .set(update_card)
@@ -101,7 +102,7 @@ impl DB {
         Ok(card)
     }
 
-    pub fn delete_card(&self, card_id: i64) -> Result<(), StdErr> {
+    pub fn delete_card(&self, card_id: i64) -> DbResult<()> {
         self.run(|conn| diesel::delete(cards::table.filter(cards::id.eq(card_id))).execute(conn))?;
         Ok(())
     }

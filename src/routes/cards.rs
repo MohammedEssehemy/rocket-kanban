@@ -1,4 +1,4 @@
-use super::http_error::StdErr;
+use super::http_error::RouteResult;
 use crate::db::{
     models::{Card, CreateCardDTO, Token, UpdateCardDTO},
     DB,
@@ -7,11 +7,7 @@ use rocket::{delete, get, patch, post, response::Debug, routes, serde::json::Jso
 
 // card routes
 #[get("/boards/<board_id>/cards")]
-async fn cards(
-    _t: &Token,
-    db: &State<DB>,
-    board_id: i64,
-) -> Result<Json<Vec<Card>>, Debug<StdErr>> {
+async fn cards(_t: &Token, db: &State<DB>, board_id: i64) -> RouteResult<Json<Vec<Card>>> {
     db.cards(board_id).map(Json).map_err(Debug)
 }
 
@@ -20,7 +16,7 @@ async fn create_card(
     _t: &Token,
     db: &State<DB>,
     create_card: Json<CreateCardDTO>,
-) -> Result<Json<Card>, Debug<StdErr>> {
+) -> RouteResult<Json<Card>> {
     db.create_card(create_card.0).map(Json).map_err(Debug)
 }
 
@@ -30,14 +26,14 @@ async fn update_card(
     db: &State<DB>,
     card_id: i64,
     update_card: Json<UpdateCardDTO>,
-) -> Result<Json<Card>, Debug<StdErr>> {
+) -> RouteResult<Json<Card>> {
     db.update_card(card_id, update_card.0)
         .map(Json)
         .map_err(Debug)
 }
 
 #[delete("/cards/<card_id>")]
-async fn delete_card(_t: &Token, db: &State<DB>, card_id: i64) -> Result<(), Debug<StdErr>> {
+async fn delete_card(_t: &Token, db: &State<DB>, card_id: i64) -> RouteResult<()> {
     db.delete_card(card_id).map_err(Debug)
 }
 

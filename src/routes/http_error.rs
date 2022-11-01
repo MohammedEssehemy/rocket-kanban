@@ -1,4 +1,4 @@
-use rocket::http::Status;
+use rocket::{http::Status, response::Debug};
 use uuid::Uuid;
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -42,4 +42,5 @@ impl HttpError {
     }
 }
 
-pub type StdErr = Box<dyn std::error::Error>;
+type HttpDynErr = Debug<Box<dyn std::error::Error>>;
+pub type RouteResult<T> = Result<T, HttpDynErr>;
