@@ -8,9 +8,9 @@ use diesel::{
 };
 use models::{Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, UpdateCardDTO};
 use schema::{boards, cards, tokens};
-use std::env;
+use std::{env, error::Error};
 
-type DbErr = Box<dyn std::error::Error>;
+type DbErr = Box<dyn Error>;
 type DbResult<T> = Result<T, DbErr>;
 
 type PgPool = Pool<ConnectionManager<PgConnection>>;
