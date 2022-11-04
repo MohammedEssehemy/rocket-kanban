@@ -1,14 +1,14 @@
-use super::http_error::RouteResult;
+use super::http_response::RouteResult;
 use crate::db::{
     models::{Board, BoardSummary, CreateBoardDTO, Token},
     DB,
 };
-use rocket::{delete, get, post, response::Debug, routes, serde::json::Json, Route, State};
+use rocket::{delete, get, post, routes, serde::json::Json, Route, State};
 
 // board routes
 #[get("/boards")]
-async fn boards(_t: &Token, db: &State<DB>) -> RouteResult<Json<Vec<Board>>> {
-    db.boards().map(Json).map_err(Debug)
+async fn boards(_t: &Token, db: &State<DB>) -> RouteResult<Vec<Board>> {
+    db.boards().into()
 }
 
 #[post("/boards", format = "json", data = "<create_board>")]
@@ -16,22 +16,18 @@ async fn create_board(
     _t: &Token,
     db: &State<DB>,
     create_board: Json<CreateBoardDTO>,
-) -> RouteResult<Json<Board>> {
-    db.create_board(create_board.0).map(Json).map_err(Debug)
+) -> RouteResult<Board> {
+    db.create_board(create_board.0).into()
 }
 
 #[get("/boards/<board_id>/summary")]
-async fn board_summary(
-    _t: &Token,
-    db: &State<DB>,
-    board_id: i64,
-) -> RouteResult<Json<BoardSummary>> {
-    db.board_summary(board_id).map(Json).map_err(Debug)
+async fn board_summary(_t: &Token, db: &State<DB>, board_id: i64) -> RouteResult<BoardSummary> {
+    db.board_summary(board_id).into()
 }
 
 #[delete("/boards/<board_id>")]
 async fn delete_board(_t: &Token, db: &State<DB>, board_id: i64) -> RouteResult<()> {
-    db.delete_board(board_id).map_err(Debug)
+    db.delete_board(board_id).into()
 }
 
 pub fn api() -> Vec<Route> {

@@ -4,6 +4,7 @@ mod boards;
 mod cards;
 mod catcher;
 mod http_error;
+mod http_response;
 
 pub use auth::Auth;
 pub use catcher::catchers;

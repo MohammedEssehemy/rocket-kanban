@@ -1,5 +1,4 @@
-use rocket::{http::Status, response::Debug};
-use std::error::Error;
+use rocket::http::Status;
 use uuid::Uuid;
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -42,6 +41,3 @@ impl HttpError {
         Self::from_message(&status, "route not found", url)
     }
 }
-
-type HttpDynErr = Debug<Box<dyn Error>>;
-pub type RouteResult<T> = Result<T, HttpDynErr>;

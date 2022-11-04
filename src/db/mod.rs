@@ -10,8 +10,8 @@ use models::{Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, Up
 use schema::{boards, cards, tokens};
 use std::{env, error::Error};
 
-type DbErr = Box<dyn Error>;
-type DbResult<T> = Result<T, DbErr>;
+pub type DbErr = Box<dyn Error>;
+pub type DbResult<T> = Result<T, DbErr>;
 
 type PgPool = Pool<ConnectionManager<PgConnection>>;
 type SinglePgConnection = PooledConnection<ConnectionManager<PgConnection>>;
