@@ -1,7 +1,13 @@
-use rocket::http::Status;
+use rocket::{
+    async_trait,
+    http::Status,
+    request::Request,
+    response::{Responder, Result},
+    serde::json::Json,
+};
 use uuid::Uuid;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HttpError {
     pub code: String,
@@ -39,5 +45,19 @@ impl HttpError {
     pub fn not_found(url: &str) -> Self {
         let status = Status::NotFound;
         Self::from_message(&status, "route not found", url)
+    }
+}
+
+#[async_trait]
+impl<'r> Responder<'r, 'static> for &'r HttpError {
+    fn respond_to(self, req: &'r Request<'_>) -> Result<'static> {
+        Json(self).respond_to(req)
+    }
+}
+
+#[async_trait]
+impl<'r> Responder<'r, 'static> for HttpError {
+    fn respond_to(self, req: &'r Request<'_>) -> Result<'static> {
+        (&self).respond_to(req)
     }
 }

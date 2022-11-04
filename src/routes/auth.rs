@@ -1,6 +1,7 @@
 use super::http_error::HttpError;
 use crate::db::{models::Token, DB};
 use rocket::{
+    async_trait,
     fairing::{Fairing, Info, Kind},
     http::Status,
     request::{FromRequest, Outcome},
@@ -33,7 +34,7 @@ type AuthResult = Result<Token, AuthError>;
 
 pub struct Auth;
 
-#[rocket::async_trait]
+#[async_trait]
 impl Fairing for Auth {
     fn info(&self) -> Info {
         Info {
@@ -97,7 +98,7 @@ impl Fairing for Auth {
     }
 }
 
-#[rocket::async_trait]
+#[async_trait]
 impl<'r> FromRequest<'r> for &'r Token {
     type Error = String;
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
