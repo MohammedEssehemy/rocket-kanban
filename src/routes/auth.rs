@@ -109,11 +109,7 @@ impl<'r> FromRequest<'r> for &'r Token {
             AuthResult::Ok(token) => Outcome::Success(token),
             AuthResult::Err(auth_error) => {
                 req.local_cache(|| {
-                    HttpError::from_message(
-                        &Status::Unauthorized,
-                        &auth_error.to_string(),
-                        &req.uri().to_string(),
-                    )
+                    HttpError::from_message(Status::Unauthorized, auth_error.to_string())
                 });
                 Outcome::Failure((Status::Unauthorized, auth_error.to_string()))
             }

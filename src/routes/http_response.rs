@@ -1,25 +1,40 @@
+use super::http_error::HttpError;
+use crate::db::DbResult;
 use rocket::{
-    response::{Debug, Responder},
+    async_trait,
+    response::{Responder, Result},
     serde::json::Json,
+    Request,
 };
+use serde::Serialize;
 
-use crate::db::{DbErr, DbResult};
-
-#[derive(Responder)]
-pub enum RouteResult<T> {
-    #[response(status = 200, content_type = "json")]
-    Success(Json<T>),
-    #[response(status = 500, content_type = "json")]
-    Fail(Debug<DbErr>),
+pub enum RouteResult<T: Serialize> {
+    Ok(T),
+    Err(HttpError),
 }
 
-impl<T> From<DbResult<T>> for RouteResult<T> {
+#[async_trait]
+impl<'r, T: Serialize> Responder<'r, 'static> for &'r RouteResult<T> {
+    fn respond_to(self, req: &'r Request<'_>) -> Result<'static> {
+        match self {
+            RouteResult::Ok(res) => Json(res).respond_to(req),
+            RouteResult::Err(err) => err.respond_to(req),
+        }
+    }
+}
+
+#[async_trait]
+impl<'r, T: Serialize> Responder<'r, 'static> for RouteResult<T> {
+    fn respond_to(self, req: &'r Request<'_>) -> Result<'static> {
+        (&self).respond_to(req)
+    }
+}
+
+impl<T: Serialize> From<DbResult<T>> for RouteResult<T> {
     fn from(db_result: DbResult<T>) -> Self {
         db_result.map_or_else(
-            // fail
-            |err| RouteResult::Fail(Debug(err)),
-            // success
-            |res| RouteResult::Success(Json(res)),
+            |err| RouteResult::Err(err.into()),
+            |res| RouteResult::Ok(res),
         )
     }
 }

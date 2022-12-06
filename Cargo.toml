@@ -16,3 +16,4 @@ diesel = { version = "2.0", features = ["postgres", "chrono", "r2d2"] }
 diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
 uuid = { version = "1.2", features = ["serde", "v4"] }
+error-chain = "0.12.4"

@@ -1,3 +1,4 @@
+mod errors;
 pub mod models;
 mod schema;
 
@@ -8,10 +9,10 @@ use diesel::{
 };
 use models::{Board, BoardSummary, Card, CreateBoardDTO, CreateCardDTO, Token, UpdateCardDTO};
 use schema::{boards, cards, tokens};
-use std::{env, error::Error};
+use std::env;
 
-pub type DbErr = Box<dyn Error>;
-pub type DbResult<T> = Result<T, DbErr>;
+pub type DbErr = errors::Error;
+pub type DbResult<T> = errors::Result<T>;
 
 type PgPool = Pool<ConnectionManager<PgConnection>>;
 type SinglePgConnection = PooledConnection<ConnectionManager<PgConnection>>;
